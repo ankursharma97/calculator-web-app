@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 h-screen flex flex-col lg:flex-row items-center justify-center gap-4 p-4">
+    <!-- Calculator -->
+    <div class="calculator w-80 bg-gray-800 p-4 rounded-xl shadow-2xl">
+        <!-- Display -->
+        <div class="display mb-4">
+            <div class="result bg-gray-700 text-white text-right p-4 rounded-lg text-3xl font-semibold h-20 overflow-hidden" id="display">
+                0
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="buttons grid grid-cols-4 gap-2">
+            <!-- ... (same button layout as before) ... -->
+            <!-- Operators -->
+            <button class="operator bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg text-xl" onclick="clearDisplay()">C</button>
+            <button class="operator bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('/')">/</button>
+            <button class="operator bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('*')">×</button>
+            <button class="operator bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg text-xl" onclick="deleteLastChar()">⌫</button>
+            
+            <!-- Numbers -->
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('7')">7</button>
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('8')">8</button>
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('9')">9</button>
+            <button class="operator bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('-')">-</button>
+            
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('4')">4</button>
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('5')">5</button>
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('6')">6</button>
+            <button class="operator bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('+')">+</button>
+            
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('1')">1</button>
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('2')">2</button>
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('3')">3</button>
+            <button class="equals bg-green-500 hover:bg-green-600 text-white p-4 rounded-lg text-xl row-span-2" onclick="calculate()">=</button>
+            
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl col-span-2" onclick="appendToDisplay('0')">0</button>
+            <button class="number bg-gray-600 hover:bg-gray-700 text-white p-4 rounded-lg text-xl" onclick="appendToDisplay('.')">.</button>
+        </div>
+    </div>
+
+    <!-- History -->
+    <div class="history w-80 bg-gray-800 p-4 rounded-xl shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-white text-lg font-semibold">History (last 5)</h2>
+            <button onclick="clearHistory()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm">
+                Clear
+            </button>
+        </div>
+        <div id="historyList" class="space-y-2">
+            <!-- History entries will be added here dynamically -->
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let currentExpression = '0';
+        let history = [];
+
+        function updateDisplay() {
+            display.textContent = currentExpression;
+        }
+
+        function appendToDisplay(value) {
+            if (currentExpression === '0' && value !== '.') {
+                currentExpression = '';
+            }
+            currentExpression += value;
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentExpression = '0';
+            updateDisplay();
+        }
+
+        function deleteLastChar() {
+            currentExpression = currentExpression.slice(0, -1);
+            if (currentExpression === '') {
+                currentExpression = '0';
+            }
+            updateDisplay();
+        }
+
+        function calculate() {
+            try {
+                const expressionBeforeEval = currentExpression;
+                const result = eval(expressionBeforeEval.replace('×', '*')).toString();
+                currentExpression = result;
+                updateDisplay();
+
+                // Add to history
+                history.unshift({
+                    expression: expressionBeforeEval,
+                    result: result
+                });
+
+                // Keep only last 5 calculations
+                if (history.length > 5) {
+                    history.pop();
+                }
+
+                updateHistoryDisplay();
+
+            } catch (error) {
+                currentExpression = 'Error';
+                updateDisplay();
+                setTimeout(clearDisplay, 1000);
+            }
+        }
+
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            history.forEach(entry => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'flex justify-between items-center text-sm p-2 hover:bg-gray-700 rounded-lg';
+                entryDiv.innerHTML = `
+                    <span class="text-gray-300 truncate">${entry.expression}</span>
+                    <span class="text-green-500 font-semibold">= ${entry.result}</span>
+                `;
+                historyList.appendChild(entryDiv);
+            });
+
+            if (history.length === 0) {
+                historyList.innerHTML = '<p class="text-gray-400 text-center">No history yet</p>';
+            }
+        }
+
+        function clearHistory() {
+            history = [];
+            updateHistoryDisplay();
+        }
+    </script>
+</body>
+</html>
